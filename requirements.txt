@@ -1,0 +1,15 @@
+apache-beam[gcp]==2.55.1
+google-cloud-aiplatform==1.48.0
+google-cloud-bigquery==3.21.0
+google-cloud-datacatalog==3.19.0
+google-cloud-pubsub==2.21.1
+google-cloud-secret-manager==2.20.0
+google-cloud-storage==2.16.0
+PyPDF2==3.0.1
+tink==1.9.0
+vertexai==1.48.0
+commentjson
+jsonschema
+gcsfs
+pytest
+
