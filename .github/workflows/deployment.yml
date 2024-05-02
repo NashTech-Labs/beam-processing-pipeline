@@ -39,6 +39,7 @@ jobs:
   build-docker-image:
     name: build-docker
     needs: test
+    environment: run_environment
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
