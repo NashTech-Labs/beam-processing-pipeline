@@ -7,6 +7,7 @@ env:
     WORKER_REGION: us-east1
     WORKER_MACHINE_TYPE: e2-medium
     NUM_WORKERS: 1
+    MAX_WORKERS: 2
     TEMP_LOCATION: gs://dataflow_job_metadata/temp_location
     STAGING_LOCATION: gs://dataflow_job_metadata/staging_location
 
@@ -71,13 +72,14 @@ jobs:
           gcloud dataflow flex-template build gs://dataflow_job_metadata/templates/run_template_github.json --image us-docker.pkg.dev/$PROJECT_ID/docker-images/beam-processing-pipeline-github:latest --sdk-language PYTHON
       - name: Run Flex Template
         run: |
-          gcloud dataflow flex-template run "data-ingestion-job-$(date +%Y-%m-%d)" \
+          gcloud dataflow flex-template run "data-processing-job-$(date +%Y-%m-%d)" \
             --template-file-gcs-location=gs://dataflow_job_metadata/templates/run_template_github.json \
             --worker-region=$WORKER_REGION \
             --worker-machine-type=$WORKER_MACHINE_TYPE \
             --region=$RUN_REGION \
             --service-account-email=${{ secrets.SA_EMAIL }} \
             --num-workers=$NUM_WORKERS \
+            --max-wrokers=$MAX_WORKERS \
             --parameters gcp_project_id=$PROJECT_ID \
             --parameters temp_location=$TEMP_LOCATION \
             --parameters staging_location=$STAGING_LOCATION
