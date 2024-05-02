@@ -79,7 +79,7 @@ jobs:
             --region=$RUN_REGION \
             --service-account-email=${{ secrets.SA_EMAIL }} \
             --num-workers=$NUM_WORKERS \
-            --max-wrokers=$MAX_WORKERS \
+            --max-workers=$MAX_WORKERS \
             --parameters gcp_project_id=$PROJECT_ID \
             --parameters temp_location=$TEMP_LOCATION \
             --parameters staging_location=$STAGING_LOCATION
