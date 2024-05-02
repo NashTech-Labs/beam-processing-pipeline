@@ -5,9 +5,9 @@ from apache_beam.io.gcp.internal.clients import bigquery
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions, StandardOptions
 import apache_beam as beam
 
-from main.prompt_engineering.structuring_prompt import primary_template
-from main.transformations.transformation import ReadFromGCS, ExtractSkills, PiiMasking
-from main.utils.constants import table_schema
+from prompt_engineering.structuring_prompt import primary_template
+from transformations.transformation import ReadFromGCS, ExtractSkills, PiiMasking
+from utils.constants import table_schema
 
 
 def run(argv=None, save_main_session=True):
