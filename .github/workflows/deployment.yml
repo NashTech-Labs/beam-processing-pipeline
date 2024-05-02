@@ -43,6 +43,8 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - name: checkout
+        uses: actions/checkout@v2
       - id: 'auth'
         uses: 'google-github-actions/auth@v1'
         with:
