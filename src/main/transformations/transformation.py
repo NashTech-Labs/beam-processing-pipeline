@@ -13,9 +13,9 @@ from PyPDF2 import PdfReader
 from jsonschema import validate
 from tink import hybrid, cleartext_keyset_handle
 
-from utils.constants import response_json_schema, pii_columns
-from utils.data_helpers.helpers import get_structuring_prompt, interface_selector
-from utils.gcp_helpers.gcp_resource_handling import check_bigquery_table_existence
+from main.utils.constants import response_json_schema, pii_columns
+from main.utils.data_helpers.helpers import get_structuring_prompt, interface_selector
+from main.utils.gcp_helpers.gcp_resource_handling import check_bigquery_table_existence
 
 
 class ReadFromGCS(beam.DoFn):

@@ -17,7 +17,7 @@ FROM gcr.io/dataflow-templates-base/python3-template-launcher-base
 # Configure the Template to launch the pipeline with a --requirements_file option.
 # See: https://beam.apache.org/documentation/sdks/python-pipeline-dependencies/#pypi-dependencies
 ENV FLEX_TEMPLATE_PYTHON_REQUIREMENTS_FILE="/template/requirements.txt"
-ENV FLEX_TEMPLATE_PYTHON_PY_FILE="/template/src/application.py"
+ENV FLEX_TEMPLATE_PYTHON_PY_FILE="/template/src/main/application.py"
 
 COPY . /template
 
