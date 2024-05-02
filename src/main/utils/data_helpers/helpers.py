@@ -2,8 +2,8 @@ import json
 import logging
 import os
 
-from main.prompt_engineering.structuring_prompt import ROLE_TYPE, TASK, REQUIRED_DETAILS, DATA_FORMAT, EVALUATION_FIELDS
-from main.utils.gcp_helpers.gcp_resource_handling import get_vertex_ai_model
+from prompt_engineering.structuring_prompt import ROLE_TYPE, TASK, REQUIRED_DETAILS, DATA_FORMAT, EVALUATION_FIELDS
+from utils.gcp_helpers.gcp_resource_handling import get_vertex_ai_model
 
 
 def setup_logger():
