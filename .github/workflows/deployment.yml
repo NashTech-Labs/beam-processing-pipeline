@@ -64,7 +64,7 @@ jobs:
       # Push the Docker image to Google Container Registry
       - name: Publish
         run: |
-          docker push us-docker.pkg.dev/$PROJECT_ID/docker-images/data-ingestion-github:latest
+          docker push us-docker.pkg.dev/$PROJECT_ID/docker-images/beam-processing-pipeline-github:latest
             # Push the Docker image to Google Container Registry
       - name: Build Flex Template
         run: |
@@ -78,6 +78,6 @@ jobs:
             --region=$RUN_REGION \
             --service-account-email=${{ secrets.SA_EMAIL }} \
             --num-workers=$NUM_WORKERS \
-            --parameters gcpProject=$PROJECT_ID \
-            --parameters tempLocation=$TEMP_LOCATION \
-            --parameters stagingLocation=$STAGING_LOCATION
+            --parameters gcp_project_id=$PROJECT_ID \
+            --parameters temp_location=$TEMP_LOCATION \
+            --parameters staging_location=$STAGING_LOCATION
