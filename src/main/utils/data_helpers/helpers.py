@@ -2,8 +2,9 @@ import json
 import logging
 import os
 
-from prompt_engineering.structuring_prompt import ROLE_TYPE, TASK, REQUIRED_DETAILS, DATA_FORMAT, EVALUATION_FIELDS
-from utils.gcp_helpers.gcp_resource_handling import get_vertex_ai_model
+from src.main.prompt_engineering.structuring_prompt import ROLE_TYPE, TASK, REQUIRED_DETAILS, DATA_FORMAT, \
+    EVALUATION_FIELDS
+from src.main.utils.gcp_helpers.gcp_resource_handling import get_vertex_ai_model
 
 
 def setup_logger():
@@ -13,53 +14,6 @@ def setup_logger():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     return logging
 
-
-
-# def validate_file_extension(filename):
-#     """Checking for valid file types for pdf and doc only"""
-#     logger = setup_logger()
-#     try:
-#         logger.info("Splitting filename and extension")
-#         name, extension = os.path.splitext(filename)
-#
-#         logger.info("Checking if file has multiple dots: '.' ")
-#         if '.' in name:
-#             message = f"Raising error - INVALID_FILENAME: {filename}"
-#             logger.error(message)
-#             raise ValueError(message)
-#
-#         if not extension:
-#             message = f"Raising error - INVALID_FILENAME_NO_EXTENSION: {filename}"
-#             logger.error(message)
-#             raise ValueError(message)
-#
-#         if extension[1:] not in valid_extensions:
-#             message = f"Raising error - INVALID_FILE_EXTENSION: {filename}"
-#             logger.error(message)
-#             raise ValueError(message)
-#
-#         logger.info("File is valid, returning valid status")
-#         return f"{filename}", 200
-#
-#     except ValueError as e:
-#         error = str(e)
-#         error_messages = {
-#             "INVALID_FILENAME": (
-#                 f"Error: {error}. Invalid filename '{filename}'. "
-#                 f"Please provide only the valid filename."
-#             ),
-#             "INVALID_FILENAME_NO_EXTENSION": (
-#                 f"Error: {error}. No file extension found in the input '{filename}'. "
-#                 f"Please provide a valid file extension."
-#             ),
-#             "INVALID_FILE_EXTENSION": (
-#                 f"Error: {error}. Unsupported file extension '{extension[1:]}'. "
-#                 f"Supported extensions are: {', '.join(valid_extensions)}."
-#             ),
-#         }
-#
-#         logger.error(f"Returning error - {error}")
-#         return error_messages.get(error, f"Unknown error occurred: {error}"), 500
 
 
 def get_directory_or_filename(input_file):
@@ -134,47 +88,6 @@ def clean_response(input_response):
     input_response.replace('```', '')
     input_response.replace('json', '')
     return input_response
-
-
-# def extract_text_from_doc(file_path):
-#     """Extracting content from DOC or DOCX file."""
-#     logger = setup_logger()
-#     try:
-#         file_extension = file_path.suffix.lower()
-#
-#         if file_extension in {'.docx', '.doc'}:
-#             doc = Document(file_path)
-#             texts = [paragraph.text for paragraph in doc.paragraphs]
-#
-#         else:
-#             raise ValueError(f"Unsupported file type: {file_extension}")
-#
-#         text_data = '\n'.join(texts)
-#         return text_data
-#
-#     except (ValueError, Exception) as e:
-#         message = f"Error extracting text from file - {str(e)}"
-#         logger.error(message)
-#         raise ValueError(message)
-
-
-# def read_file_extension_based(input_files, saved_dir_path):
-#     logger = setup_logger()
-#
-#     try:
-#         file_extension = os.path.splitext(input_files)[-1].lower()
-#
-#         if file_extension == '.pdf':
-#             logger.info("Extracting content of pdf file type")
-#             return extract_text_from_pdf(saved_dir_path / input_files)
-#
-#         elif file_extension in {'.docx', '.doc'}:
-#             logger.info("Extracting content of docx file type")
-#             return extract_text_from_doc(saved_dir_path / input_files)
-#
-#     except (ValueError, Exception) as error:
-#         logger.error(error)
-#         raise error
 
 
 def get_structuring_prompt(input_template, extracted_resume_text):

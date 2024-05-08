@@ -1,19 +1,18 @@
 import argparse
 import logging
 
+import apache_beam as beam
 from apache_beam.io.gcp.internal.clients import bigquery
 from apache_beam.options.pipeline_options import PipelineOptions, SetupOptions, StandardOptions
-import apache_beam as beam
 
-from prompt_engineering.structuring_prompt import primary_template
-from transformations.transformation import ReadFromGCS, ExtractSkills, PiiMasking
-from utils.constants import table_schema
+from src.main.prompt_engineering.structuring_prompt import primary_template
+from src.main.transformations.transformation import ReadFromGCS, ExtractSkills, PiiMasking
+from src.main.utils.constants import table_schema, table_schema_dead_letter_queue
 
 
 def run(argv=None, save_main_session=True):
     """Build and run the pipeline."""
     parser = argparse.ArgumentParser()
-    # group = parser.add_mutually_exclusive_group(required=True)
     parser.add_argument(
         '--input_topic',
         default='projects/alert-basis-421507/topics/resume-parser-processor-topic',
@@ -53,7 +52,11 @@ def run(argv=None, save_main_session=True):
     )
     parser.add_argument(
         '--tableId',
-        default='test_only5',
+        default='candidates_data',
+    )
+    parser.add_argument(
+        '--deadletterQueue',
+        default='deadletterQueue',
     )
     parser.add_argument(
         '--gcp_project_id',
@@ -65,8 +68,6 @@ def run(argv=None, save_main_session=True):
     )
 
     known_args, pipeline_args = parser.parse_known_args(argv)
-    # We use the save_main_session option because one or more DoFn's in this
-    # workflow rely on global context (e.g., a module imported at module level).
     pipeline_options = PipelineOptions(pipeline_args)
     pipeline_options.view_as(SetupOptions).save_main_session = save_main_session
     pipeline_options.view_as(StandardOptions).streaming = True
@@ -75,6 +76,10 @@ def run(argv=None, save_main_session=True):
         datasetId=known_args.dataset_id,
         tableId=known_args.tableId)
 
+    table_spec_dead_letter_queue = bigquery.TableReference(
+        projectId=known_args.gcp_project_id,
+        datasetId=known_args.dataset_id,
+        tableId=known_args.deadletterQueue)
     with beam.Pipeline(options=pipeline_options) as p:
 
         # Read from PubSub into a PCollection.
@@ -86,25 +91,48 @@ def run(argv=None, save_main_session=True):
 
         lines = messages | 'decode' >> beam.Map(lambda x: x.decode('utf-8'))
 
-        counts = (
+        records_from_gcs = (
                 lines
-                | 'Split' >> (beam.ParDo(ReadFromGCS(project_id=known_args.gcp_project_id)))
-                | 'Extract Skills From Resume' >> (beam.ParDo(ExtractSkills(primary_template,
-                                                                            known_args.vertex_ai_project_id,
-                                                                            known_args.vertex_ai_region,
-                                                                            known_args.gemini_model_id
-                                                                            )))
-                # | 'Attaching PII Tags' >> beam.ParDo(AttachPiiTag())
-                | "PII Masking" >> beam.ParDo(PiiMasking(project_id=known_args.gcp_project_id,
-                                                         dataset_id=known_args.dataset_id,
-                                                         table_id=known_args.tableId,
-                                                         tag_template_id=known_args.pii_tag_template_name,
-                                                         encrypted_public_key_secret_path=known_args.encrypted_public_key_secret_path))
-                | "Write to BQ" >> beam.io.WriteToBigQuery(table=table_spec,
-                                                           schema=table_schema,
-                                                           write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
-                                                           create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED)
-        )
+                | 'Split' >> (
+                    beam.ParDo(ReadFromGCS(project_id=known_args.gcp_project_id)).with_outputs("main_output",
+                                                                                               "error_output")))
+
+        valid_records_from_gcs = records_from_gcs['main_output']
+
+        records_extracted_skills = valid_records_from_gcs | 'Extract Skills From Resume' >> (
+            beam.ParDo(ExtractSkills(primary_template,
+                                     known_args.vertex_ai_project_id,
+                                     known_args.vertex_ai_region,
+                                     known_args.gemini_model_id
+                                     )).with_outputs("main_output", "error_output"))
+
+        valid_records_skills_extracted = records_extracted_skills['main_output']
+
+        pii_records_masked = valid_records_skills_extracted | "PII Masking" >> beam.ParDo(
+            PiiMasking(project_id=known_args.gcp_project_id,
+                       dataset_id=known_args.dataset_id,
+                       table_id=known_args.tableId,
+                       tag_template_id=known_args.pii_tag_template_name,
+                       encrypted_public_key_secret_path=known_args.encrypted_public_key_secret_path)).with_outputs(
+            "main_output", "error_output")
+
+        valid_records_pii_masked = pii_records_masked['main_output']
+        valid_records_pii_masked | "Write to BQ Valid Records" >> beam.io.WriteToBigQuery(table=table_spec,
+                                                                                          schema=table_schema,
+                                                                                          write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                                                                                          create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED)
+
+        invalid_records = ((records_from_gcs['error_output'], records_extracted_skills['error_output'],
+                            pii_records_masked['error_output'])
+                           | 'Merge PCollections' >> beam.Flatten())
+        valid_records_pii_masked | "Write to BQ valid Records" >> beam.io.WriteToBigQuery(table=table_spec,
+                                                                                          schema=table_schema,
+                                                                                          write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                                                                                          create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED)
+        invalid_records | "Write to BQ Invalid Records" >> beam.io.WriteToBigQuery(table=table_spec_dead_letter_queue,
+                                                                                 schema=table_schema_dead_letter_queue,
+                                                                                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
+                                                                                 create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED)
 
 
 if __name__ == '__main__':

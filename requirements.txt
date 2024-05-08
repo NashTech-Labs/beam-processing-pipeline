@@ -1,4 +1,4 @@
-apache-beam[gcp]==2.55.1
+apache-beam[gcp]==2.56.0
 google-cloud-aiplatform==1.48.0
 google-cloud-bigquery==3.21.0
 google-cloud-datacatalog==3.19.0
