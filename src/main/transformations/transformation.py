@@ -180,9 +180,7 @@ class ExtractSkills(beam.DoFn):
                                                   region=self.vertex_ai_region,
                                                   gemini_model_id=self.gemini_model_id)
             # Extracting structured response
-            start_index = structured_response.split('```json')
-            response = start_index[1].split('```')[0]
-            json_response = commentjson.loads(response)
+            json_response = commentjson.loads(structured_response)
 
             # Validating structured response against schema
             validate(instance=json_response, schema=response_json_schema)
@@ -314,7 +312,7 @@ class PiiMasking(beam.DoFn):
 
             # Yielding masked PII data
             element.pop('original_info')
-            print('Elemet is', element)
+            # print('Elemet is', element)
             yield pvalue.TaggedOutput('main_output', element)
 
         except Exception as e:
