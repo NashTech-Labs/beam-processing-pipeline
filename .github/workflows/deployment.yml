@@ -17,6 +17,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    environment: run_environment
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python 3.8
